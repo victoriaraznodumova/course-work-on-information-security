@@ -62,13 +62,16 @@ export default {
 
       
       keyExpantion3 (key){
+        // ДЕШИФРОВАНИЕ
         return [15, 45, 64, 226, 36, 164, 155, 5];
       },
 
 
 
       keyExpantion(key){
-          // Функция для выполнения циклического сдвига влево на байте
+        const keyArray = this.key.split(',').map(Number);   
+        
+        // Функция для выполнения циклического сдвига влево на байте
           function leftShift(key, shift) {
             return (key << shift) | (key >>> (32 - shift));
           }
@@ -133,12 +136,7 @@ export default {
 
             return expandedKey;
           }
-
-            // Пример использования
-            const initialKey = [0x2b, 0x7e, 0x15, 0x16, 0x77, 0xbd, 0x8b, 0x99]; // Ключ длиной 128 бит (16 байт)
-            const expandedKey = expandKey(initialKey);
-
-
+            const expandedKey = expandKey(keyArray);
 
 
             //expandedKey = [21, 5, 25, 223, 54, 140, 230,  19];
@@ -155,6 +153,8 @@ export default {
 
 
         Encryption(){
+          const R = this.message.split(',').map(Number); 
+          //const R = [0x15, 0x2d, 0x64, 0xe2, 0x36, 0xa4, 0x9b, 0x05];
           function mix_encryption(R, key){
             const result = [];
             for (let i = 0; i<4; i++){
@@ -174,22 +174,23 @@ export default {
               }
               return result;
           }
+          
 
-          const R = [0x15, 0x2d, 0x64, 0xe2, 0x36, 0xa4, 0x9b, 0x05];
+  // СООБЩЕНИЕ 15, 45, 64, 226, 36, 164, 155, 5
 
-  //15, 45, 64, 226, 36, 164, 155, 5
-
-  //0x2b, 0x7e, 0x15, 0x16, 0x77, 0xbd, 0x8b, 0x99
-  //43, 126, 15, 16, 77, 189, 139, 99
+  // КЛЮЧ 0x2b, 0x7e, 0x15, 0x16, 0x77, 0xbd, 0x8b, 0x99 
+  // КЛЮЧ В 10СС 43, 126, 15, 16, 77, 189, 139, 99
 
           const R_14 = R.slice(0, 4);
           const R_58 = R.slice(4, 8);
 
-          let enc_key = this.keyExpantion();
+
+          this.expandedKey = this.keyExpantion();
+          //let enc_key = this.keyExpantion(key);
           const sliced_key_encryption = [];
 
-          for (let i = 0; i < enc_key.length; i += 4) {
-            sliced_key_encryption.push(enc_key.slice(i, i + 4));
+          for (let i = 0; i < this.expandedKey.length; i += 4) {
+            sliced_key_encryption.push(this.expandedKey.slice(i, i + 4));
           }
 
 
@@ -205,7 +206,7 @@ export default {
           //console.log ("mix 5th round", R_14_encryption_3);
 
 
-          const R_58_encryption_3 = mash_encryption(R_58_encryption_2, enc_key);
+          const R_58_encryption_3 = mash_encryption(R_58_encryption_2, this.expandedKey);
           //console.log ("mash 1st round", R_58_encryption_3);
 
 
@@ -223,7 +224,7 @@ export default {
           //console.log ("mix 11th round", R_58_encryption_6);
 
 
-          const R_14_encryption_7 = mash_encryption(R_14_encryption_6, enc_key);
+          const R_14_encryption_7 = mash_encryption(R_14_encryption_6, this.expandedKey);
           //console.log ("mash 2nd round", R_14_encryption_7);
 
 
@@ -238,12 +239,10 @@ export default {
           const R_58_encryption = mix_encryption(R_58_encryption_8, sliced_key_encryption[15]);
           //console.log ("mix 16th round", R_58_encryption);
 
-          
 
           const encryption = R_14_encryption.concat(R_58_encryption);
           const hexArray = encryption.map(item => item.toString(16));
           return hexArray;
-
           },
 
 
